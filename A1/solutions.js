@@ -125,7 +125,7 @@
  ******************************************************************************/
 
  function greeting(name) {
-  return `Hello ${name}`;
+  return `Hello ${name}!`;
 }
 
 /*******************************************************************************
@@ -255,16 +255,14 @@ function crush(value){
  * @returns {Date}
  ******************************************************************************/
 
-function parseDateString(value) {
-  var date_values = value.split('-');
-  if(date_values[0].length === 4 && date_values[1].length === 2 && date_values[2].length === 2 ){
-    return(new Date(value));
+ function parseDateString(value) {
+  let [year, day, month] = value.split('-');
+
+  if (year.length !== 4 || day.length !== 2 || month.length !== 2) {
+    throw 'Error';
   }
-  else
-  {
-    console.log('this is totally wrong');
-    return null;
-  }
+
+  return new Date(year, month - 1, day);
 }
 
 /*******************************************************************************
@@ -288,16 +286,12 @@ function parseDateString(value) {
  * @param {Date} value - a date
  * @returns {string}
  ******************************************************************************/
-function twoDigitPad(num) {
-  return (num < 10 ? '0' : '') + num
-}
 
 function toDateString(value) {
-  result_string = value.getUTCFullYear()
-  + '-' + twoDigitPad(value.getUTCMonth()+1)
-  + '-' + twoDigitPad(value.getUTCDate());
-
-  return result_string;
+  var year = value.getFullYear();
+  var month = ('0' + (value.getMonth() + 1)).slice(-2);
+  var day = ('0' + value.getDate()).slice(-2);
+  return year + '-' + day + '-' + month;
 }
 
 /*******************************************************************************
@@ -321,29 +315,10 @@ function toDateString(value) {
  * @returns {boolean}
  ******************************************************************************/
 
-function lat(value)
-{
-  result = 0;
-  if (value >= -90 && value <= 90)
-  {
-    result = 1;
-  }
-  else
-    result = 0;
-    return result;
-}
-function lng(value)
-{
-  result = 0;
-  if (value >= -180 && value <= 180)
-  {
-    result = 1;
-  }
-  else result = 0;
-  return result;
-}
-function validateCoord(inputlat, inputlng) {
-  return (lat(inputlat) && lng(inputlng));
+function validateCoord(lat, lng) {
+  var res = false;
+  if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) res = true;
+  return res;
 }
 
 /*******************************************************************************
@@ -421,10 +396,10 @@ function formatCoords(...values) {
   var store = [];
   for (i = 0; i < values.length; i += 2){
     if (validateCoord(values[i], values[i+1]))
-      list.push(formatCoord(values[i], values[i+1], true));
+      store.push(formatCoord(values[i], values[i+1], true));
     else throw new Error ('invalid lat lng pair');
   }
-  return '[' + list.join(' ,') + ']';
+  return '[' + store.join(', ') + ']';
 }
 
 /*******************************************************************************
@@ -489,7 +464,8 @@ function mimeFromFilename(filename) {
   case 'js':
     result = 'text/javascript';
     break;
-  case ('jpg' || 'jpeg'):
+  case 'jpg':
+  case 'jpeg':
     result = 'image/jpeg';
     break;
   case 'gif':
@@ -498,7 +474,8 @@ function mimeFromFilename(filename) {
   case 'bmp':
     result = 'image/bmp';
     break;
-  case ('ico' || 'cur'):
+  case 'ico':
+  case 'cur':
     result = 'image/x-icon';
     break;
   case 'png':
@@ -560,20 +537,12 @@ function mimeFromFilename(filename) {
  ******************************************************************************/
 
 function extractFSA(postalCode) {
-  if (postalCode.length === 6)
-  {
-    if (postalCode[0] != D || F || I || O || Q || U || W)
-    {
-      if (postalCode[1] == /[0-9]/)
-      {
-        if (postalCode[2] == /[a-zA-Z]/)
-        {
-          console.log(postalCode.substring(0,3));
-        }
-      }
-    }
+  if (/^[ABCEGHJKLMNPRSTVXY][0-9][a-zA-Z]/i.test(postalCode)){
+    postalCode = postalCode.substring(0,3);
   }
-  else console.log('invalid FSA');
+  else {
+    throw new Error('invalid FSA');
+  }
   return postalCode;
 }
 
@@ -596,45 +565,33 @@ function extractFSA(postalCode) {
  * @returns {bool}
  ******************************************************************************/
 
-function pureBool(value) {
-  result = 0;
-  if(yes||yes,YES,Y, t, TRUE, true, True, 1)
-  {
-    result = 1;
-  }
-  else if(No, no, NO, N, n, f, FALSE, false, False, 0, null, undefined, -1)
-  {
-    result = 0;
-  }
-  else
-  {
-    result = 0;
-    console.log('invalid boolean value');
-  }
-	return result;
-}
-
-//alternatively
-
-function pureBool(value){
-  if (value === undefined || value === null)
-    return false;
+ function pureBool(value) {
   var type = typeof value;
-  if (type === 'boolean')
-    return value;
-  else if (type === 'number')
-    return value > 0;
-  else if (type === 'string'){
-    value = value.toLowerCase();
-    if (value === 'yes' || value === 'true' || value === 'y')
-      return true;
-    if (value === 'no' || value === 'false' || value === 'n' || value === 'f')
-      return false;
+  var res;
+  switch (type){
+    case "string":
+      type = value.toLowerCase();
+      if (type == "yes" || type == "y" || type == "true" || type == "t")
+        res = true;
+      else res = false;
+      break;
+    case "number":
+      if (value > 0) res = true;
+      else res = false;
+      break;
+    case "boolean":
+      res = value;
+      break;
+    case "object":
+    case "undefined":
+    case "null":
+    default:
+      res = false;
+      break;
   }
-  return true;
+  return res;
 }
 
-//I didn't have this part back then at all. I add this for demonstration only.
 /*******************************************************************************
  * Problem 9 Part 2: checking for all True or all False values in a normalized list
  *
@@ -652,25 +609,33 @@ function pureBool(value){
  * when pureBool() throws on invalid data.
  ******************************************************************************/
 function all(){
-  var res = [];
-  for (var i = 0; i < arguments.length; i++){
-    res[i] = pureBool(arguments[i]);
+  var value = true;
+  try {
+    for (var i = 0; i < arguments.length; i++){
+      var res = pureBool(arguments[i]);
+      if (res === false){
+        value = false;
+      }
+    }
+    return value;
+  } catch (error){
+    throw 'Error';
   }
-  if (result.every((result) => result = true)){
-    return true;
-  }
-  else return false;
 }
 
 function none(){
-  var res = [];
-  for (var i = 0; i < arguments.length; i++){
-    res[i] = pureBool(arguments[i]);
+  var value = false;
+  try {
+    for (var i = 0; i < arguments.length; i++){
+      var res = pureBool(arguments[i]);
+      if (res === true){
+        value = true;
+      }
+    }
+    return !value;
+  } catch (error){
+    throw 'Error';
   }
-  if (result.every((result) => result = false)){
-    return true;
-  }
-  else return false;
 }
 
 /*******************************************************************************
