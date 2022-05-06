@@ -1,0 +1,9 @@
+form div {
+  display: flex;
+}
+
+.required,
+#errorLong,
+#errorLat {
+  color: red;
+}
